@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { City, Route, Step, dijkstra, formatDistance } from "../utils/dijkstra";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { MapPin } from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 
 interface CityGraphProps {
   cities: City[];
@@ -28,7 +28,10 @@ const CityGraph: React.FC<CityGraphProps> = ({
   const [currentPath, setCurrentPath] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<Step | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [pathIndicatorPos, setPathIndicatorPos] = useState<{x: number, y: number} | null>(null);
+  const [currentPathIndex, setCurrentPathIndex] = useState(0);
   const animationRef = useRef<NodeJS.Timeout | null>(null);
+  const pathAnimationRef = useRef<NodeJS.Timeout | null>(null);
 
   // Clear animation state on reset
   useEffect(() => {
@@ -37,10 +40,17 @@ const CityGraph: React.FC<CityGraphProps> = ({
       setCurrentPath([]);
       setCurrentStep(null);
       setIsAnimating(false);
+      setPathIndicatorPos(null);
+      setCurrentPathIndex(0);
       
       if (animationRef.current) {
         clearTimeout(animationRef.current);
         animationRef.current = null;
+      }
+      
+      if (pathAnimationRef.current) {
+        clearTimeout(pathAnimationRef.current);
+        pathAnimationRef.current = null;
       }
     }
   }, [isRunning]);
@@ -54,6 +64,8 @@ const CityGraph: React.FC<CityGraphProps> = ({
       setVisitedNodes([]);
       setCurrentPath([]);
       setCurrentStep(null);
+      setPathIndicatorPos(null);
+      setCurrentPathIndex(0);
       
       // Create an array to store all steps
       const allSteps: Step[] = [];
@@ -80,8 +92,8 @@ const CityGraph: React.FC<CityGraphProps> = ({
           // If we've reached the final step
           if (stepIndex === allSteps.length - 1) {
             setCurrentPath(result.path);
+            animatePathIndicator(result.path);
             onComplete(result.path, result.distance);
-            setIsAnimating(false);
           } else {
             // Schedule the next step
             animationRef.current = setTimeout(animateNextStep, 800);
@@ -99,8 +111,53 @@ const CityGraph: React.FC<CityGraphProps> = ({
       if (animationRef.current) {
         clearTimeout(animationRef.current);
       }
+      if (pathAnimationRef.current) {
+        clearTimeout(pathAnimationRef.current);
+      }
     };
   }, [isRunning, sourceCity, destinationCity, cities, routes, onComplete]);
+
+  // Animate path indicator moving along the path
+  const animatePathIndicator = (path: string[]) => {
+    if (path.length < 2) {
+      setIsAnimating(false);
+      return;
+    }
+
+    let pathIndex = 0;
+    
+    const animateNextSegment = () => {
+      if (pathIndex < path.length - 1) {
+        const fromCityId = path[pathIndex];
+        const toCityId = path[pathIndex + 1];
+        
+        const fromCity = cities.find(c => c.id === fromCityId);
+        const toCity = cities.find(c => c.id === toCityId);
+        
+        if (fromCity && toCity) {
+          // Set the initial position
+          setPathIndicatorPos({
+            x: fromCity.position.x,
+            y: fromCity.position.y
+          });
+          
+          setCurrentPathIndex(pathIndex);
+          
+          // Schedule the next segment
+          pathAnimationRef.current = setTimeout(() => {
+            pathIndex++;
+            animateNextSegment();
+          }, 1500);
+        }
+      } else {
+        // Animation complete
+        setIsAnimating(false);
+      }
+    };
+    
+    // Start the path animation
+    animateNextSegment();
+  };
 
   // Helper function to determine if a route is in the current path
   const isRouteInPath = (source: string, target: string) => {
@@ -118,15 +175,15 @@ const CityGraph: React.FC<CityGraphProps> = ({
     return false;
   };
 
-  // Get positions for the SVG
-  const minX = Math.min(...cities.map(city => city.position.x)) - 50;
-  const minY = Math.min(...cities.map(city => city.position.y)) - 50;
-  const maxX = Math.max(...cities.map(city => city.position.x)) + 100;
-  const maxY = Math.max(...cities.map(city => city.position.y)) + 100;
+  // Expand the map by adjusting the view box and adding more padding
+  const minX = Math.min(...cities.map(city => city.position.x)) - 100;
+  const minY = Math.min(...cities.map(city => city.position.y)) - 100;
+  const maxX = Math.max(...cities.map(city => city.position.x)) + 150;
+  const maxY = Math.max(...cities.map(city => city.position.y)) + 150;
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="relative overflow-hidden flex-1 bg-secondary/20 rounded-lg backdrop-blur-sm shadow-inner">
+      <div className="relative overflow-hidden flex-1 bg-secondary/10 rounded-lg backdrop-blur-sm shadow-inner">
         <svg 
           width="100%" 
           height="100%" 
@@ -155,20 +212,21 @@ const CityGraph: React.FC<CityGraphProps> = ({
                   style={isActive ? { strokeDasharray: 1000, strokeDashoffset: 1000 } : {}}
                 />
                 
-                {/* Distance label with background */}
+                {/* Distance label with improved background */}
                 <rect
-                  x={midX - 30}
-                  y={midY - 20}
-                  width="60"
-                  height="20"
-                  rx="5"
-                  className={`${isActive ? 'fill-primary/20' : 'fill-white/90'} stroke-border`}
+                  x={midX - 35}
+                  y={midY - 15}
+                  width="70"
+                  height="25"
+                  rx="8"
+                  className={`${isActive ? 'fill-primary/20 stroke-primary/30' : 'fill-white/95 stroke-border'} stroke-1`}
                 />
                 <text
                   x={midX}
-                  y={midY - 6}
+                  y={midY + 2}
                   className="edge-label"
                   textAnchor="middle"
+                  dominantBaseline="middle"
                 >
                   <tspan className="distance-label">{route.distance}</tspan> km
                 </text>
@@ -199,10 +257,10 @@ const CityGraph: React.FC<CityGraphProps> = ({
                   }}
                 >
                   <foreignObject 
-                    width="100" 
-                    height="100" 
-                    x="-50" 
-                    y="-50"
+                    width="120" 
+                    height="120" 
+                    x="-60" 
+                    y="-60"
                     className="overflow-visible pointer-events-none"
                   >
                     <div className={cn("city-node", {
@@ -211,12 +269,12 @@ const CityGraph: React.FC<CityGraphProps> = ({
                       "visited": isVisited && !isPath && !isSource && !isDestination,
                       "path": isPath && !isSource && !isDestination
                     })}>
-                      <MapPin className="h-6 w-6" />
+                      <MapPin className="h-8 w-8 text-foreground" />
                       <span className="city-node-label">{city.name}</span>
                       
                       {/* Show the current distance estimate if visited */}
                       {isVisited && distance != null && distance !== Infinity && (
-                        <span className="absolute top-16 left-1/2 -translate-x-1/2 text-xs font-medium py-1 px-2 bg-white/90 rounded shadow-sm border">
+                        <span className="absolute top-24 left-1/2 -translate-x-1/2 text-xs font-bold py-1.5 px-3 bg-white/90 rounded-md shadow-sm border border-primary/30">
                           {formatDistance(distance)}
                         </span>
                       )}
@@ -226,6 +284,51 @@ const CityGraph: React.FC<CityGraphProps> = ({
               </g>
             );
           })}
+          
+          {/* Path indicator */}
+          <AnimatePresence>
+            {pathIndicatorPos && currentPath.length > 1 && (
+              <motion.g
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <circle
+                  cx={pathIndicatorPos.x}
+                  cy={pathIndicatorPos.y}
+                  r="8"
+                  className="fill-primary"
+                />
+                <motion.circle
+                  cx={pathIndicatorPos.x}
+                  cy={pathIndicatorPos.y}
+                  r="12"
+                  className="fill-primary/30 stroke-primary stroke-1"
+                  animate={{ r: [12, 18, 12] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+                <motion.g 
+                  animate={{ 
+                    y: [0, -10, 0],
+                    x: [0, 0, 0] 
+                  }}
+                  transition={{ 
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <Navigation 
+                    x={pathIndicatorPos.x - 6} 
+                    y={pathIndicatorPos.y - 26} 
+                    size={12} 
+                    className="text-white fill-primary" 
+                  />
+                </motion.g>
+              </motion.g>
+            )}
+          </AnimatePresence>
         </svg>
       </div>
     </div>

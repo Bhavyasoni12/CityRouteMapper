@@ -99,7 +99,7 @@
 /* Custom classes for the app */
 @layer components {
   .city-node {
-    @apply relative flex flex-col items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg border-2 border-border transition-all duration-300;
+    @apply relative flex flex-col items-center justify-center w-24 h-24 rounded-full bg-white shadow-lg border-2 border-border transition-all duration-300;
     will-change: transform;
   }
   
@@ -124,11 +124,11 @@
   }
   
   .city-node-label {
-    @apply font-semibold text-sm;
+    @apply font-bold text-base mt-1;
   }
 
   .city-label {
-    @apply absolute -bottom-8 left-1/2 -translate-x-1/2 font-bold text-sm whitespace-nowrap px-2 py-1 bg-white/90 rounded shadow-sm border border-border;
+    @apply absolute -bottom-8 left-1/2 -translate-x-1/2 font-bold text-sm whitespace-nowrap px-3 py-1.5 bg-white/90 rounded-md shadow-sm border border-border;
   }
   
   .edge {
@@ -136,7 +136,7 @@
   }
   
   .edge.active {
-    @apply stroke-primary stroke-[4] animate-line-drawing;
+    @apply stroke-primary stroke-[5] animate-line-drawing;
   }
   
   .edge-label {
@@ -157,12 +157,35 @@
     to { stroke-dashoffset: 0; }
   }
 
+  @keyframes move-along-path {
+    0% { transform: translateX(0) translateY(0); }
+    100% { transform: translateX(var(--end-x)) translateY(var(--end-y)); }
+  }
+  
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
   .animate-pulse-glow {
     animation: pulse-glow 2s infinite;
   }
 
   .animate-line-drawing {
-    animation: line-drawing 2s forwards;
+    animation: line-drawing 1.5s forwards;
+  }
+  
+  .animate-move-along {
+    animation: move-along-path 2s forwards;
+  }
+  
+  .animate-bounce {
+    animation: bounce 1s infinite;
+  }
+
+  .path-indicator {
+    @apply absolute h-4 w-4 rounded-full bg-primary shadow-lg z-10;
+    animation: bounce 1s infinite;
   }
 }
 

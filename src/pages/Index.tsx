@@ -68,8 +68,8 @@ const Index = () => {
       </header>
 
       <main className="flex-1 container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+          <div className="lg:col-span-3">
             <div className="bg-white/30 backdrop-blur-sm p-6 rounded-xl border border-border shadow-sm h-full">
               <motion.h2
                 initial={{ y: 10, opacity: 0 }}
@@ -79,7 +79,7 @@ const Index = () => {
               >
                 City Network Visualization
               </motion.h2>
-              <div className="h-[700px]">
+              <div className="h-[750px]">
                 <CityGraph
                   cities={indiaGraph.cities}
                   routes={indiaGraph.routes}
