@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { City, Route, Step, dijkstra, formatDistance } from "../utils/dijkstra";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { MapPin } from "lucide-react";
 
 interface CityGraphProps {
   cities: City[];
@@ -140,6 +141,8 @@ const CityGraph: React.FC<CityGraphProps> = ({
             if (!sourceCity || !targetCity) return null;
             
             const isActive = isRouteInPath(route.source, route.target);
+            const midX = (sourceCity.position.x + targetCity.position.x) / 2;
+            const midY = (sourceCity.position.y + targetCity.position.y) / 2;
             
             return (
               <g key={`${route.source}-${route.target}`}>
@@ -152,10 +155,18 @@ const CityGraph: React.FC<CityGraphProps> = ({
                   style={isActive ? { strokeDasharray: 1000, strokeDashoffset: 1000 } : {}}
                 />
                 
-                {/* Distance label */}
+                {/* Distance label with background */}
+                <rect
+                  x={midX - 30}
+                  y={midY - 20}
+                  width="60"
+                  height="20"
+                  rx="5"
+                  className={`${isActive ? 'fill-primary/20' : 'fill-white/90'} stroke-border`}
+                />
                 <text
-                  x={(sourceCity.position.x + targetCity.position.x) / 2}
-                  y={(sourceCity.position.y + targetCity.position.y) / 2 - 10}
+                  x={midX}
+                  y={midY - 6}
                   className="edge-label"
                   textAnchor="middle"
                 >
@@ -188,10 +199,10 @@ const CityGraph: React.FC<CityGraphProps> = ({
                   }}
                 >
                   <foreignObject 
-                    width="80" 
-                    height="80" 
-                    x="-40" 
-                    y="-40"
+                    width="100" 
+                    height="100" 
+                    x="-50" 
+                    y="-50"
                     className="overflow-visible pointer-events-none"
                   >
                     <div className={cn("city-node", {
@@ -200,8 +211,8 @@ const CityGraph: React.FC<CityGraphProps> = ({
                       "visited": isVisited && !isPath && !isSource && !isDestination,
                       "path": isPath && !isSource && !isDestination
                     })}>
-                      <span className="text-xl font-semibold">🏙️</span>
-                      <span className="city-label">{city.name}</span>
+                      <MapPin className="h-6 w-6" />
+                      <span className="city-node-label">{city.name}</span>
                       
                       {/* Show the current distance estimate if visited */}
                       {isVisited && distance != null && distance !== Infinity && (

@@ -110,6 +110,7 @@ const Index = () => {
                 path={currentPath}
                 distance={pathDistance}
                 cities={indiaGraph.cities}
+                routes={indiaGraph.routes}
                 onReset={resetResults}
               />
             )}

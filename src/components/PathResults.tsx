@@ -1,6 +1,6 @@
 
 import React from "react";
-import { City, formatDistance } from "../utils/dijkstra";
+import { City, formatDistance, Route } from "../utils/dijkstra";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation, ArrowRight } from "lucide-react";
@@ -10,13 +10,15 @@ interface PathResultsProps {
   distance: number;
   cities: City[];
   onReset: () => void;
+  routes?: Route[];
 }
 
 const PathResults: React.FC<PathResultsProps> = ({ 
   path, 
   distance, 
   cities, 
-  onReset 
+  onReset,
+  routes = []
 }) => {
   const cityNames = path.map(cityId => {
     const city = cities.find(c => c.id === cityId);
@@ -24,6 +26,15 @@ const PathResults: React.FC<PathResultsProps> = ({
   });
   
   const hasPath = path.length > 0 && distance !== Infinity;
+
+  // Get the distance between consecutive cities in the path
+  const getSegmentDistance = (source: string, target: string) => {
+    const route = routes.find(r => 
+      (r.source === source && r.target === target) || 
+      (r.source === target && r.target === source)
+    );
+    return route ? route.distance : null;
+  };
   
   return (
     <motion.div
@@ -43,42 +54,53 @@ const PathResults: React.FC<PathResultsProps> = ({
       
       {hasPath ? (
         <>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex items-center p-2 bg-secondary rounded-md">
-              <Navigation className="h-4 w-4 text-green-500" />
+          <div className="flex items-center gap-2 mb-5 p-3 bg-primary/10 rounded-lg">
+            <div className="flex items-center p-2 bg-primary/20 rounded-md">
+              <Navigation className="h-5 w-5 text-primary" />
             </div>
-            <div className="text-sm font-medium">
+            <div className="text-sm font-bold">
               Total Distance: <span className="text-primary">{formatDistance(distance)}</span>
             </div>
           </div>
           
-          <div className="space-y-2 mt-4">
+          <div className="space-y-1 mt-4">
             {cityNames.map((cityName, index) => (
-              <div key={index} className="flex items-center">
-                <div className="flex flex-col items-center mr-2">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    index === 0 
-                      ? "bg-green-100 text-green-700 border border-green-300" 
-                      : index === cityNames.length - 1 
-                        ? "bg-primary/20 text-primary border border-primary/30" 
-                        : "bg-secondary text-foreground/70 border border-border"
-                  }`}>
-                    {index === 0 ? (
-                      <MapPin className="h-3 w-3" />
-                    ) : index === cityNames.length - 1 ? (
-                      <MapPin className="h-3 w-3" />
-                    ) : (
-                      index
+              <React.Fragment key={index}>
+                <div className="flex items-center">
+                  <div className="flex flex-col items-center mr-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      index === 0 
+                        ? "bg-green-100 text-green-700 border-2 border-green-500" 
+                        : index === cityNames.length - 1 
+                          ? "bg-primary/20 text-primary border-2 border-primary" 
+                          : "bg-secondary text-foreground/70 border border-border"
+                    }`}>
+                      {index === 0 ? (
+                        <MapPin className="h-4 w-4" />
+                      ) : index === cityNames.length - 1 ? (
+                        <MapPin className="h-4 w-4" />
+                      ) : (
+                        index
+                      )}
+                    </div>
+                    {index < cityNames.length - 1 && (
+                      <div className="w-px h-8 bg-border"></div>
                     )}
                   </div>
-                  {index < cityNames.length - 1 && (
-                    <div className="w-px h-4 bg-border"></div>
-                  )}
+                  <div className="flex-1 p-2 text-sm font-semibold">
+                    {cityName}
+                  </div>
                 </div>
-                <div className="flex-1 p-2 text-sm">
-                  {cityName}
-                </div>
-              </div>
+                
+                {index < cityNames.length - 1 && path[index] && path[index + 1] && (
+                  <div className="flex items-center pl-10 pb-2">
+                    <ArrowRight className="h-3 w-3 text-muted-foreground mr-1" />
+                    <span className="text-xs text-muted-foreground">
+                      {getSegmentDistance(path[index], path[index + 1])} km
+                    </span>
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         </>

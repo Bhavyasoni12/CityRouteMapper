@@ -99,7 +99,7 @@
 /* Custom classes for the app */
 @layer components {
   .city-node {
-    @apply relative flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-lg border border-border transition-all duration-300;
+    @apply relative flex flex-col items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg border-2 border-border transition-all duration-300;
     will-change: transform;
   }
   
@@ -108,11 +108,11 @@
   }
   
   .city-node.source {
-    @apply border-green-500 border-2 ring-2 ring-green-500/30;
+    @apply border-green-500 border-2 ring-4 ring-green-500/30;
   }
   
   .city-node.destination {
-    @apply border-accent border-2 ring-2 ring-accent/30;
+    @apply border-accent border-2 ring-4 ring-accent/30;
   }
 
   .city-node.visited {
@@ -123,12 +123,16 @@
     @apply border-primary border-2 ring-4 ring-primary/30 animate-pulse-glow;
   }
   
+  .city-node-label {
+    @apply font-semibold text-sm;
+  }
+
   .city-label {
-    @apply absolute -bottom-8 left-1/2 -translate-x-1/2 font-medium text-sm whitespace-nowrap;
+    @apply absolute -bottom-8 left-1/2 -translate-x-1/2 font-bold text-sm whitespace-nowrap px-2 py-1 bg-white/90 rounded shadow-sm border border-border;
   }
   
   .edge {
-    @apply stroke-muted-foreground/30 stroke-[3];
+    @apply stroke-muted-foreground/40 stroke-[3];
   }
   
   .edge.active {
@@ -136,11 +140,29 @@
   }
   
   .edge-label {
-    @apply fill-muted-foreground text-sm font-medium;
+    @apply fill-muted-foreground text-xs font-medium;
   }
   
   .distance-label {
-    @apply text-red-500 font-medium;
+    @apply text-red-500 font-bold;
+  }
+
+  /* Add animations */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 5px 0 rgba(var(--primary), 0.3); }
+    50% { box-shadow: 0 0 20px 5px rgba(var(--primary), 0.4); }
+  }
+
+  @keyframes line-drawing {
+    to { stroke-dashoffset: 0; }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s infinite;
+  }
+
+  .animate-line-drawing {
+    animation: line-drawing 2s forwards;
   }
 }
 
